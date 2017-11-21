@@ -1,19 +1,37 @@
-const request = require('request')
-const cheerio = require('cheerio')
-const url = require('url-parse')
+var request = require('request');
+var cheerio = require('cheerio');
+const inquirer = require('inquirer');
+var fs = require('fs');
 
-const pageToVisit = 'https://medium.com/'
-console.log('Crawling ' + pageToVisit)
+const searchWord = 'react'
 
-request(pageToVisit, (error, response, body) => {
-   if(error) {
-     console.log("Error: " + error);
-   }
-   // Check status code (200 is HTTP OK)
-   console.log("Status code: " + response.statusCode);
-   if(response.statusCode === 200) {
-     // Parse the document body
-     var $ = cheerio.load(body);
-     console.log("Page title:  " + $('title').text());
-   }
-});
+var questions = [
+    {
+      name: 'searchTerm',
+      type: 'input',
+      message: 'Enter your search term:',
+      validate: function( value ) {
+        if (value.length) {
+          return true;
+        } else {
+          return 'Please enter search term';
+        }
+      }
+    }
+  ]
+
+inquirer.prompt(questions).then((answers) => {
+  request(`https://medium.com/search?q=${answers.searchTerm}`, function(error, response, body) {
+    if(error) {
+      console.log("Error: " + error);
+    }
+    console.log("Status code: " + response.statusCode);
+
+    var $ = cheerio.load(body);
+
+    $('h3.graf--title').each(function( index ) {
+      // console.log($(this.children))
+      console.log($(this).text().trim())
+    });
+  });
+})
